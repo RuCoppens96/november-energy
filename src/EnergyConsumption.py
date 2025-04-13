@@ -117,6 +117,42 @@ def plot_default_consumption_pattern(df):
     plt.grid()
     plt.show()
 
+# Get default yearly energy consumption via VREG API
+def get_default_yearly_energy_consumption_VREG(personas, heatpump, car, hassolar, battery, solarpanels):
+    """
+    Retrieves default yearly energy consumption data from VREG API.
+    :return: json with default yearly energy consumption data.
+    """
+    import requests
+
+    # Prepare url and parameters
+    url = 'https://vtest.vreg.be/Calculation/GetEstimates'
+    params = {
+        'electricity': 'true',
+        'gas': 'true',
+        'night': 'true',
+        'digital': 'true',
+        'persons': personas,
+        'hassolar': hassolar,
+        'heatpump': heatpump,
+        'car': car,
+        'battery': battery,
+        'solarpanels': solarpanels
+    }
+
+    req = requests.models.PreparedRequest()
+    req.prepare_url(url, params)
+    url = req.url
+
+    # Get response from API
+    response = requests.get(url, headers={'Accept': 'application/json', 'Content-Type': 'application/json'})
+
+    if response.status_code == 200:
+        data = response.json()
+        return {key: data[key] for key in ['Day', 'Night', 'Gas']}
+    else:
+        raise Exception(f"Error fetching data: {response.status_code} - {response.text}")
+
 
 ## The EnergyConsumption class is used to manage and analyze energy consumption data.
 ## It includes methods for generating default consumption patterns, calculating total consumption,
