@@ -12,12 +12,39 @@ jupyter: python3
 ---
 
 ```{python}
-from EnergyConsumption import generate_default_consumption_pattern_gas, generate_default_consumption_pattern_electricity_day, generate_default_consumption_pattern_electricity_night, plot_default_consumption_pattern
+import pandas as pd
+from great_tables import GT, md
+from EnergyConsumption import EnergyConsumption, generate_default_consumption_pattern_gas, generate_default_consumption_pattern_electricity_day, generate_default_consumption_pattern_electricity_night, plot_default_consumption_pattern
 ```
 
 ## Calculate yearly energy consumption
+```{python}
+energy_consumption = EnergyConsumption()
+```
 
 ### VREG API
+Based on the default inputs, the VREG estimates a yearly consumption as indicated below.
+```{python}
+df_VREG = pd.DataFrame(data = {
+  'Day': [energy_consumption.default_VREG['Day']],
+  'Night': [energy_consumption.default_VREG['Night']],
+  'Gas': [energy_consumption.default_VREG['Gas']]})
+
+(
+    GT(df_VREG)
+    .tab_header(
+        title=md("Estimated yearly consumption based on VREG"),
+        subtitle=md("*In kWh*"),
+    )
+    .cols_label(
+        Day="Electricity Day",
+        Night="Electricity Night",
+        Gas="Gas",
+    )
+    .cols_align("center")
+    .fmt_integer(sep_mark='.')
+)
+```
 
 ### Energy consumption pattern - extrapolated
 

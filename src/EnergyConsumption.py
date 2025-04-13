@@ -117,50 +117,70 @@ def plot_default_consumption_pattern(df):
     plt.grid()
     plt.show()
 
-# Get default yearly energy consumption via VREG API
-def get_default_yearly_energy_consumption_VREG(personas, heatpump, car, hassolar, battery, solarpanels):
-    """
-    Retrieves default yearly energy consumption data from VREG API.
-    :return: json with default yearly energy consumption data.
-    """
-    import requests
-
-    # Prepare url and parameters
-    url = 'https://vtest.vreg.be/Calculation/GetEstimates'
-    params = {
-        'electricity': 'true',
-        'gas': 'true',
-        'night': 'true',
-        'digital': 'true',
-        'persons': personas,
-        'hassolar': hassolar,
-        'heatpump': heatpump,
-        'car': car,
-        'battery': battery,
-        'solarpanels': solarpanels
-    }
-
-    req = requests.models.PreparedRequest()
-    req.prepare_url(url, params)
-    url = req.url
-
-    # Get response from API
-    response = requests.get(url, headers={'Accept': 'application/json', 'Content-Type': 'application/json'})
-
-    if response.status_code == 200:
-        data = response.json()
-        return {key: data[key] for key in ['Day', 'Night', 'Gas']}
-    else:
-        raise Exception(f"Error fetching data: {response.status_code} - {response.text}")
-
-
 ## The EnergyConsumption class is used to manage and analyze energy consumption data.
 ## It includes methods for generating default consumption patterns, calculating total consumption,
 ## and plotting consumption patterns.
 class EnergyConsumption:
-    def __init__(self, history, default_consumption_pattern):
-        self.history = history
-        self.default_consumption_pattern = default_consumption_pattern
-        self.consumption = pd.DataFrame(columns=['month', 'consumption'])
-        self.consumpion_total = 0
-        self.consumption_pattern = pd.DataFrame(columns=['month', 'pattern'])
+    def __init__(self, input_data_file = '../data/input/consumption.xlsx'):
+        self.inputs = {
+            'defaults': pd.read_excel(input_data_file, sheet_name='defaults'),
+            'gas': pd.read_excel(input_data_file, sheet_name='digital_gas'),
+            'electricity': pd.read_excel(input_data_file, sheet_name='digital_electricity')
+        }
+
+        self.default_VREG = self.VREG_API_defaults()
+
+    # Get default yearly energy consumption via VREG API
+    def VREG_API(self, personas, heatpump, car, hassolar, battery, solarpanels):
+        """
+        Retrieves default yearly energy consumption data from VREG API.
+        :return: json with default yearly energy consumption data.
+        """
+        import requests
+
+        # Prepare url and parameters
+        url = 'https://vtest.vreg.be/Calculation/GetEstimates'
+        params = {
+            'electricity': 'true',
+            'gas': 'true',
+            'night': 'true',
+            'digital': 'true',
+            'persons': personas,
+            'hassolar': hassolar,
+            'heatpump': heatpump,
+            'car': car,
+            'battery': battery,
+            'solarpanels': solarpanels
+        }
+
+        req = requests.models.PreparedRequest()
+        req.prepare_url(url, params)
+        url = req.url
+
+        # Get response from API
+        response = requests.get(url, headers={'Accept': 'application/json', 'Content-Type': 'application/json'})
+
+        if response.status_code == 200:
+            data = response.json()
+            return {key: data[key] for key in ['Day', 'Night', 'Gas']}
+        else:
+            raise Exception(f"Error fetching data: {response.status_code} - {response.text}")
+    
+    # Get default yearly energy consumption via VREG API based on 'defaults' sheet in input data file
+    def VREG_API_defaults(self):
+        """
+        Retrieves default yearly energy consumption data from VREG API based on 'defaults' sheet in input data file.
+        :return: dictonary with default yearly energy consumption data.
+        """
+        # Get parameters from defaults sheet
+        personas = self.inputs['defaults'].iloc[0, 1]
+        heatpump = self.inputs['defaults'].iloc[1, 1]
+        car = self.inputs['defaults'].iloc[2, 1]
+        hassolar = self.inputs['defaults'].iloc[3, 1]
+        battery = self.inputs['defaults'].iloc[4, 1]
+        solarpanels = self.inputs['defaults'].iloc[5, 1]
+
+        return self.VREG_API(personas, heatpump, car, hassolar, battery, solarpanels)
+
+
+    
