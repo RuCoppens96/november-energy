@@ -23,7 +23,7 @@ build/
 *.conda
 *.env
 *.lock
-*.yml
+
 
 # PyInstaller
 *.manifest

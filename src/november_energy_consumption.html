@@ -3115,10 +3115,10 @@ vertical-align: -.125em;
 </header>
 
 
-<div id="ae4093d4" class="cell" data-execution_count="1">
+<div id="daa27831" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> Helper <span class="im">import</span> generate_default_consumption_pattern_gas, generate_default_consumption_pattern_electricity_day, generate_default_consumption_pattern_electricity_night, plot_default_consumption_pattern</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> EnergyConsumption <span class="im">import</span> generate_default_consumption_pattern_gas, generate_default_consumption_pattern_electricity_day, generate_default_consumption_pattern_electricity_night, plot_default_consumption_pattern</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="calculate-yearly-energy-consumption" class="level2" data-number="1">
@@ -3129,7 +3129,7 @@ vertical-align: -.125em;
 <section id="energy-consumption-pattern---extrapolated" class="level3" data-number="1.2">
 <h3 data-number="1.2" class="anchored" data-anchor-id="energy-consumption-pattern---extrapolated"><span class="header-section-number">1.2</span> Energy consumption pattern - extrapolated</h3>
 <p>In case no full history of the energy consumption is available, data will be extrapolated based on the below pattern. This is the actual consumption of a house in Belgium.</p>
-<div id="ddeadeaa" class="cell" data-execution_count="2">
+<div id="120b6fa5" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>plot_default_consumption_pattern(generate_default_consumption_pattern_gas())</span>

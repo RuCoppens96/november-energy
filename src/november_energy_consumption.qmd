@@ -12,7 +12,7 @@ jupyter: python3
 ---
 
 ```{python}
-from Helper import generate_default_consumption_pattern_gas, generate_default_consumption_pattern_electricity_day, generate_default_consumption_pattern_electricity_night, plot_default_consumption_pattern
+from EnergyConsumption import generate_default_consumption_pattern_gas, generate_default_consumption_pattern_electricity_day, generate_default_consumption_pattern_electricity_night, plot_default_consumption_pattern
 ```
 
 ## Calculate yearly energy consumption
