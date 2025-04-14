@@ -10,5 +10,6 @@ november-energy/
 ├── src
 │   ├── __init__.py
 ├── .gitignore
+├── environment.yml
 └── README.md
 ``` 
