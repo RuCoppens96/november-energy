@@ -119,6 +119,14 @@ class EnergyConsumption:
             'Night': generate_default_consumption_pattern_electricity_night()
         }
 
+        self.actual_consumption = {
+            'Gas': self.get_actual_consumption_data('Gas'),
+            'Day': self.get_actual_consumption_data('Day'),
+            'Night': self.get_actual_consumption_data('Night')
+        }
+
+
+
     # Get default yearly energy consumption via VREG API
     def VREG_API(self, personas, heatpump, car, hassolar, battery, solarpanels):
         """
@@ -192,3 +200,74 @@ class EnergyConsumption:
         plt.xticks(df['month'])
         plt.grid()
         plt.show()
+    
+    # Plot the actual consumption data
+    def plot_actual_consumption_data(self, consumption_type):
+        """
+        Plots the actual consumption data.
+        :param df: DataFrame with actual consumption data.
+        """
+        import matplotlib.pyplot as plt
+
+        df = self.actual_consumption[consumption_type]
+        if df.empty:
+            print(f"No data available for {consumption_type}.")
+            return
+        plt.figure(figsize=(6, 3))
+        plt.plot(df['month'], df['Volume'], marker='o')
+        plt.title('Actual ' + df.attrs['consumption_type'] + ' Consumption Data')
+        plt.xlabel('Month')
+        plt.ylabel('Consumption Volume')
+        plt.xticks(df['month'], rotation=45)
+        plt.grid()
+        plt.show()
+
+    # Get actual consumption data
+    def get_actual_consumption_data(self, consumption_type):
+        """
+        Retrieves actual consumption data from the input data file.
+        :param consumption_type: Type of consumption (Gas, Day, Night).
+        :return: DataFrame with actual consumption data.
+        """
+        if consumption_type == 'Gas':
+            df = self.inputs['gas']
+            df = df[df['Eenheid'] == "kWh"]
+            df = df[df['Validatiestatus'] == 'Uitgelezen']
+            df.attrs['consumption_type'] = 'gas'
+        elif consumption_type == 'Day':
+            df = self.inputs['electricity'][self.inputs['electricity']['Register'] == "Afname Dag"]
+            df = df[df['Validatiestatus'] == 'Uitgelezen']
+            df.attrs['consumption_type'] = 'electricity Day'
+        elif consumption_type == 'Night':
+            df = self.inputs['electricity'][self.inputs['electricity']['Register'] == "Afname Nacht"]
+            df = df[df['Validatiestatus'] == 'Uitgelezen']
+            df.attrs['consumption_type'] = 'electricity Night'
+        else:
+            raise ValueError(f"Invalid consumption type: {consumption_type}")
+        
+        df['month'] = df['Van (datum)']
+        df = df.loc[:, ['month', 'Volume']]
+        return df.copy()
+    
+    # Get actual consumption data by consumption type for the last 12 months
+    def get_actual_consumption_data_last_12_months_by_consumption_type(self, consumption_type):
+        """
+        Retrieves actual consumption data for the last 12 months.
+        :param consumption_type: Type of consumption (Gas, Day, Night).
+        :return: DataFrame with actual consumption data for the last 12 months.
+        """
+        df = self.get_actual_consumption_data(consumption_type)
+        df['month'] = pd.to_datetime(df['month'], format='%d/%m/%Y')
+        df = df.sort_values(by='month', ascending=False).head(12)
+        return df['Volume'].sum()
+    
+    # Get actual consumption data for the last 12 months
+    def get_actual_consumption_data_last_12_months(self):
+        """
+        Retrieves actual consumption data for the last 12 months.
+        :return: DataFrame with actual consumption data for the last 12 months.
+        """
+        gas = self.get_actual_consumption_data_last_12_months_by_consumption_type('Gas')
+        day = self.get_actual_consumption_data_last_12_months_by_consumption_type('Day')
+        night = self.get_actual_consumption_data_last_12_months_by_consumption_type('Night')
+        return {'Gas': gas, 'Day': day, 'Night': night}
