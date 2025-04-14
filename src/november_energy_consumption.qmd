@@ -57,5 +57,38 @@ energy_consumption.plot_default_consumption_pattern('Night')
 ```
 
 ### Energy consumption pattern - actuals
+The following energy consumption was inputted by the user. 
+```{python}
+energy_consumption.plot_actual_consumption_data('Gas')
+energy_consumption.plot_actual_consumption_data('Day')
+energy_consumption.plot_actual_consumption_data('Night')
+```
+
+Extracting the data from the last 12 months, we can calculate the yearly consumption. 
+```{python}
+# Calculate yearly consumption based on actuals
+yearly_consumption = energy_consumption.get_actual_consumption_data_last_12_months()
+
+
+df_consumption = pd.DataFrame(data = {
+  'Day': [yearly_consumption['Day']],
+  'Night': [yearly_consumption['Night']],
+  'Gas': [yearly_consumption['Gas']]})
+
+(
+    GT(df_consumption)
+    .tab_header(
+        title=md("Actual yearly consumption based on user input"),
+        subtitle=md("*In kWh*"),
+    )
+    .cols_label(
+        Day="Electricity Day",
+        Night="Electricity Night",
+        Gas="Gas",
+    )
+    .cols_align("center")
+    .fmt_integer(sep_mark='.')
+)
+```
 
 ### Result
