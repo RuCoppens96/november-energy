@@ -14,7 +14,7 @@ jupyter: python3
 ```{python}
 import pandas as pd
 from great_tables import GT, md
-from EnergyConsumption import EnergyConsumption, generate_default_consumption_pattern_gas, generate_default_consumption_pattern_electricity_day, generate_default_consumption_pattern_electricity_night, plot_default_consumption_pattern
+from EnergyConsumption import EnergyConsumption
 ```
 
 ## Calculate yearly energy consumption
@@ -51,9 +51,9 @@ df_VREG = pd.DataFrame(data = {
 In case no full history of the energy consumption is available, data will be extrapolated based on the below pattern. This is the actual consumption of a house in Belgium.
 
 ```{python}
-plot_default_consumption_pattern(generate_default_consumption_pattern_gas())
-plot_default_consumption_pattern(generate_default_consumption_pattern_electricity_day())
-plot_default_consumption_pattern(generate_default_consumption_pattern_electricity_night())
+energy_consumption.plot_default_consumption_pattern('Gas')
+energy_consumption.plot_default_consumption_pattern('Day')
+energy_consumption.plot_default_consumption_pattern('Night')
 ```
 
 ### Energy consumption pattern - actuals

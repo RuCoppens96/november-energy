@@ -1,6 +1,5 @@
 import pandas as pd
-
-##### Helper functions ######
+## Helpers
 # This function generates a default gas consumption pattern for each month based on actual consumption data.
 def generate_default_consumption_pattern_gas():
     """
@@ -100,22 +99,6 @@ def generate_default_consumption_pattern_electricity_night():
     df.attrs['consumption_type'] = 'eletricity Night'
     return df.copy()
 
-# Plot the default consumption pattern
-def plot_default_consumption_pattern(df):
-    """
-    Plots the default consumption pattern.
-    :param df: DataFrame with default consumption pattern.
-    """
-    import matplotlib.pyplot as plt
-
-    plt.figure(figsize=(6, 3))
-    plt.plot(df['month'], df['pattern'], marker='o')
-    plt.title('Default ' + df.attrs['consumption_type'] + ' Consumption Pattern')
-    plt.xlabel('Month')
-    plt.ylabel('Normalized Consumption Pattern')
-    plt.xticks(df['month'])
-    plt.grid()
-    plt.show()
 
 ## The EnergyConsumption class is used to manage and analyze energy consumption data.
 ## It includes methods for generating default consumption patterns, calculating total consumption,
@@ -129,6 +112,12 @@ class EnergyConsumption:
         }
 
         self.default_VREG = self.VREG_API_defaults()
+
+        self.default_consumption_pattern = {
+            'Gas': generate_default_consumption_pattern_gas(),
+            'Day': generate_default_consumption_pattern_electricity_day(),
+            'Night': generate_default_consumption_pattern_electricity_night()
+        }
 
     # Get default yearly energy consumption via VREG API
     def VREG_API(self, personas, heatpump, car, hassolar, battery, solarpanels):
@@ -181,6 +170,25 @@ class EnergyConsumption:
         solarpanels = self.inputs['defaults'].iloc[5, 1]
 
         return self.VREG_API(personas, heatpump, car, hassolar, battery, solarpanels)
-
-
     
+  
+    # Plot the default consumption pattern
+    def plot_default_consumption_pattern(self, consumption_type):
+        """
+        Plots the default consumption pattern.
+        :param df: DataFrame with default consumption pattern.
+        """
+        import matplotlib.pyplot as plt
+
+        df = self.default_consumption_pattern[consumption_type]
+        if df.empty:
+            print(f"No data available for {consumption_type}.")
+            return
+        plt.figure(figsize=(6, 3))
+        plt.plot(df['month'], df['pattern'], marker='o')
+        plt.title('Default ' + df.attrs['consumption_type'] + ' Consumption Pattern')
+        plt.xlabel('Month')
+        plt.ylabel('Normalized Consumption Pattern')
+        plt.xticks(df['month'])
+        plt.grid()
+        plt.show()
