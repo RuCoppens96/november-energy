@@ -111,7 +111,7 @@ class EnergyConsumption:
             'electricity': pd.read_excel(input_data_file, sheet_name='digital_electricity')
         }
 
-        self.default_VREG = self.VREG_API_defaults()
+        self.default_VREG = self.__VREG_API_defaults()
 
         self.default_consumption_pattern = {
             'Gas': generate_default_consumption_pattern_gas(),
@@ -120,15 +120,15 @@ class EnergyConsumption:
         }
 
         self.actual_consumption = {
-            'Gas': self.get_actual_consumption_data('Gas'),
-            'Day': self.get_actual_consumption_data('Day'),
-            'Night': self.get_actual_consumption_data('Night')
+            'Gas': self.__get_actual_consumption_data('Gas'),
+            'Day': self.__get_actual_consumption_data('Day'),
+            'Night': self.__get_actual_consumption_data('Night')
         }
 
 
 
     # Get default yearly energy consumption via VREG API
-    def VREG_API(self, personas, heatpump, car, hassolar, battery, solarpanels):
+    def __VREG_API(self, personas, heatpump, car, hassolar, battery, solarpanels):
         """
         Retrieves default yearly energy consumption data from VREG API.
         :return: json with default yearly energy consumption data.
@@ -164,7 +164,7 @@ class EnergyConsumption:
             raise Exception(f"Error fetching data: {response.status_code} - {response.text}")
     
     # Get default yearly energy consumption via VREG API based on 'defaults' sheet in input data file
-    def VREG_API_defaults(self):
+    def __VREG_API_defaults(self):
         """
         Retrieves default yearly energy consumption data from VREG API based on 'defaults' sheet in input data file.
         :return: dictonary with default yearly energy consumption data.
@@ -177,7 +177,7 @@ class EnergyConsumption:
         battery = self.inputs['defaults'].iloc[4, 1]
         solarpanels = self.inputs['defaults'].iloc[5, 1]
 
-        return self.VREG_API(personas, heatpump, car, hassolar, battery, solarpanels)
+        return self.__VREG_API(personas, heatpump, car, hassolar, battery, solarpanels)
     
   
     # Plot the default consumption pattern
@@ -223,7 +223,7 @@ class EnergyConsumption:
         plt.show()
 
     # Get actual consumption data
-    def get_actual_consumption_data(self, consumption_type):
+    def __get_actual_consumption_data(self, consumption_type):
         """
         Retrieves actual consumption data from the input data file.
         :param consumption_type: Type of consumption (Gas, Day, Night).
@@ -250,24 +250,24 @@ class EnergyConsumption:
         return df.copy()
     
     # Get actual consumption data by consumption type for the last 12 months
-    def get_actual_consumption_data_last_12_months_by_consumption_type(self, consumption_type):
+    def __get_actual_consumption_last_12_months_by_consumption_type(self, consumption_type):
         """
         Retrieves actual consumption data for the last 12 months.
         :param consumption_type: Type of consumption (Gas, Day, Night).
         :return: DataFrame with actual consumption data for the last 12 months.
         """
-        df = self.get_actual_consumption_data(consumption_type)
+        df = self.__get_actual_consumption_data(consumption_type)
         df['month'] = pd.to_datetime(df['month'], format='%d/%m/%Y')
         df = df.sort_values(by='month', ascending=False).head(12)
         return df['Volume'].sum()
     
     # Get actual consumption data for the last 12 months
-    def get_actual_consumption_data_last_12_months(self):
+    def get_actual_consumption_last_12_months(self):
         """
         Retrieves actual consumption data for the last 12 months.
         :return: DataFrame with actual consumption data for the last 12 months.
         """
-        gas = self.get_actual_consumption_data_last_12_months_by_consumption_type('Gas')
-        day = self.get_actual_consumption_data_last_12_months_by_consumption_type('Day')
-        night = self.get_actual_consumption_data_last_12_months_by_consumption_type('Night')
+        gas = self.__get_actual_consumption_last_12_months_by_consumption_type('Gas')
+        day = self.__get_actual_consumption_last_12_months_by_consumption_type('Day')
+        night = self.__get_actual_consumption_last_12_months_by_consumption_type('Night')
         return {'Gas': gas, 'Day': day, 'Night': night}

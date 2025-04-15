@@ -67,7 +67,7 @@ energy_consumption.plot_actual_consumption_data('Night')
 Extracting the data from the last 12 months, we can calculate the yearly consumption. 
 ```{python}
 # Calculate yearly consumption based on actuals
-yearly_consumption = energy_consumption.get_actual_consumption_data_last_12_months()
+yearly_consumption = energy_consumption.get_actual_consumption_last_12_months()
 
 
 df_consumption = pd.DataFrame(data = {
