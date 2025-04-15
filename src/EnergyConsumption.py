@@ -105,30 +105,50 @@ def generate_default_consumption_pattern_electricity_night():
 ## and plotting consumption patterns.
 class EnergyConsumption:
     def __init__(self, input_data_file = '../data/input/consumption.xlsx'):
+        # Initialize the EnergyConsumption class with input data file.
         self.inputs = {
             'defaults': pd.read_excel(input_data_file, sheet_name='defaults'),
             'gas': pd.read_excel(input_data_file, sheet_name='digital_gas'),
             'electricity': pd.read_excel(input_data_file, sheet_name='digital_electricity')
         }
 
-        self.default_VREG = self.VREG_API_defaults()
+        # Get default yearly energy consumption via VREG API
+        self.default_VREG = self.__VREG_API_defaults()
 
+        # Load default yearly energy consumption via pattern
         self.default_consumption_pattern = {
             'Gas': generate_default_consumption_pattern_gas(),
             'Day': generate_default_consumption_pattern_electricity_day(),
             'Night': generate_default_consumption_pattern_electricity_night()
         }
 
+        # Get actual consumption data
         self.actual_consumption = {
-            'Gas': self.get_actual_consumption_data('Gas'),
-            'Day': self.get_actual_consumption_data('Day'),
-            'Night': self.get_actual_consumption_data('Night')
+            'Gas': self.__get_actual_consumption_data('Gas'),
+            'Day': self.__get_actual_consumption_data('Day'),
+            'Night': self.__get_actual_consumption_data('Night')
         }
+
+        # Determie which consumption data to use
+        months_history  = len(self.actual_consumption['Gas']['month'].dt.month.unique())
+        if months_history == 0:
+            # Use default consumption VREG
+            self.consumption_data = self.default_VREG
+            self.consumption_data_calculation = 'VREG'
+        elif months_history >= 12:
+            # Use actual consumption data
+            self.consumption_data = self.get_actual_consumption_last_12_months()
+            self.consumption_data_calculation = 'actual'
+        else:
+            # Forecast consumption data
+            self.consumption_data = self.get_forecasted_consumption_last_12_months()
+            self.consumption_data_calculation = 'forecasted'
+
 
 
 
     # Get default yearly energy consumption via VREG API
-    def VREG_API(self, personas, heatpump, car, hassolar, battery, solarpanels):
+    def __VREG_API(self, personas, heatpump, car, hassolar, battery, solarpanels):
         """
         Retrieves default yearly energy consumption data from VREG API.
         :return: json with default yearly energy consumption data.
@@ -164,7 +184,7 @@ class EnergyConsumption:
             raise Exception(f"Error fetching data: {response.status_code} - {response.text}")
     
     # Get default yearly energy consumption via VREG API based on 'defaults' sheet in input data file
-    def VREG_API_defaults(self):
+    def __VREG_API_defaults(self):
         """
         Retrieves default yearly energy consumption data from VREG API based on 'defaults' sheet in input data file.
         :return: dictonary with default yearly energy consumption data.
@@ -177,7 +197,7 @@ class EnergyConsumption:
         battery = self.inputs['defaults'].iloc[4, 1]
         solarpanels = self.inputs['defaults'].iloc[5, 1]
 
-        return self.VREG_API(personas, heatpump, car, hassolar, battery, solarpanels)
+        return self.__VREG_API(personas, heatpump, car, hassolar, battery, solarpanels)
     
   
     # Plot the default consumption pattern
@@ -223,7 +243,7 @@ class EnergyConsumption:
         plt.show()
 
     # Get actual consumption data
-    def get_actual_consumption_data(self, consumption_type):
+    def __get_actual_consumption_data(self, consumption_type):
         """
         Retrieves actual consumption data from the input data file.
         :param consumption_type: Type of consumption (Gas, Day, Night).
@@ -250,24 +270,102 @@ class EnergyConsumption:
         return df.copy()
     
     # Get actual consumption data by consumption type for the last 12 months
-    def get_actual_consumption_data_last_12_months_by_consumption_type(self, consumption_type):
+    def __get_actual_consumption_last_12_months_by_consumption_type(self, consumption_type):
         """
         Retrieves actual consumption data for the last 12 months.
         :param consumption_type: Type of consumption (Gas, Day, Night).
         :return: DataFrame with actual consumption data for the last 12 months.
         """
-        df = self.get_actual_consumption_data(consumption_type)
+        df = self.__get_actual_consumption_data(consumption_type)
         df['month'] = pd.to_datetime(df['month'], format='%d/%m/%Y')
         df = df.sort_values(by='month', ascending=False).head(12)
         return df['Volume'].sum()
     
     # Get actual consumption data for the last 12 months
-    def get_actual_consumption_data_last_12_months(self):
+    def get_actual_consumption_last_12_months(self):
         """
         Retrieves actual consumption data for the last 12 months.
         :return: DataFrame with actual consumption data for the last 12 months.
         """
-        gas = self.get_actual_consumption_data_last_12_months_by_consumption_type('Gas')
-        day = self.get_actual_consumption_data_last_12_months_by_consumption_type('Day')
-        night = self.get_actual_consumption_data_last_12_months_by_consumption_type('Night')
+        gas = self.__get_actual_consumption_last_12_months_by_consumption_type('Gas')
+        day = self.__get_actual_consumption_last_12_months_by_consumption_type('Day')
+        night = self.__get_actual_consumption_last_12_months_by_consumption_type('Night')
         return {'Gas': gas, 'Day': day, 'Night': night}
+    
+    # Forecast consumption data based on default consumption pattern and actual consumption data
+    def __forecast_consumption_data_by_consumption_type(self, consumption_type):
+        """
+        Forecasts consumption data based on default consumption pattern and actual consumption data.
+        :param consumption_type: Type of consumption (Gas, Day, Night).
+        :return: DataFrame with forecasted consumption data.
+        """
+        df = self.default_consumption_pattern[consumption_type]
+        # Fetch actual consumption data
+        df2 = self.__get_actual_consumption_data(consumption_type)
+        df2['month'] = pd.to_datetime(df2['month'], format='%d/%m/%Y')
+        df2 = df2.sort_values(by='month', ascending=False).head(12)
+        df2['month'] = df2['month'].dt.month
+
+        # Get pattern and merge with actual consumption data
+        df = df.merge(df2, on='month', how='left')
+        df['has_actual'] = df['Volume'].notnull()
+        df["pattern_consumption"] = df['pattern'] * df['has_actual']
+
+        # Get forecasted total consumption
+        actual_consumption = df['Volume'].sum()
+        pattern_consumption = df['pattern_consumption'].sum()
+        forecasted_consumption = actual_consumption / pattern_consumption
+        df['volume_predicted'] = df['pattern'] * forecasted_consumption
+        
+        df.attrs['consumption_type'] = consumption_type
+        return df.copy()
+    
+    # Plot the forecasted and actual consumption data
+    def plot_forecasted_consumption_data(self, consumption_type):
+        """
+        Plots the forecasted and actual consumption data.
+        :param consumption_type: Type of consumption (Gas, Day, Night).
+        """
+        import matplotlib.pyplot as plt
+
+        df = self.__forecast_consumption_data_by_consumption_type(consumption_type)
+        if df.empty:
+            print(f"No data available for {consumption_type}.")
+            return
+        plt.figure(figsize=(6, 3))
+        plt.plot(df['month'], df['volume_predicted'], marker='o', label='Forecasted Consumption')
+        plt.plot(df['month'], df['Volume'], marker='o', label='Actual Consumption')
+        plt.title('Forecasted and Actual ' + df.attrs['consumption_type'] + ' Consumption Data')
+        plt.xlabel('Month')
+        plt.ylabel('Consumption Volume')
+        plt.xticks(df['month'], rotation=45)
+        plt.legend()
+        plt.grid()
+        plt.show()
+    
+    # Get forecasted consumption data for the last 12 months
+    def get_forecasted_consumption_last_12_months(self):
+        """
+        Retrieves forecasted consumption data for the last 12 months.
+        :return: DataFrame with forecasted consumption data for the last 12 months.
+        """
+        gas = self.__forecast_consumption_data_by_consumption_type('Gas')['volume_predicted'].sum()
+        day = self.__forecast_consumption_data_by_consumption_type('Day')['volume_predicted'].sum()
+        night = self.__forecast_consumption_data_by_consumption_type('Night')['volume_predicted'].sum()
+        return {'Gas': gas, 'Day': day, 'Night': night}
+    
+    # Get total consumption data
+    def get_total_consumption_data(self):
+        """
+        Retrieves total consumption data.
+        :return: DataFrame with total consumption data.
+        """
+        return self.consumption_data.copy()
+    
+    # Get Consumption data calculation method
+    def get_consumption_data_calculation(self):
+        """
+        Retrieves consumption data calculation method.
+        :return: string with consumption data calculation method.
+        """
+        return self.consumption_data_calculation
