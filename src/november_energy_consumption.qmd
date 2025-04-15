@@ -56,6 +56,38 @@ energy_consumption.plot_default_consumption_pattern('Day')
 energy_consumption.plot_default_consumption_pattern('Night')
 ```
 
+Applying the pattern to the last 12 months, we can calculate the yearly consumption.
+```{python}
+energy_consumption.plot_forecasted_consumption_data('Gas')
+energy_consumption.plot_forecasted_consumption_data('Day')
+energy_consumption.plot_forecasted_consumption_data('Night')
+```
+
+```{python}
+# Calculate yearly consumption based on forecasted data
+forecasted_yearly_consumption = energy_consumption.get_forecasted_consumption_last_12_months()
+
+df_consumption = pd.DataFrame(data = {
+  'Day': [forecasted_yearly_consumption['Day']],
+  'Night': [forecasted_yearly_consumption['Night']],
+  'Gas': [forecasted_yearly_consumption['Gas']]})
+
+(
+    GT(df_consumption)
+    .tab_header(
+        title=md("Forecasted yearly consumption based on user input"),
+        subtitle=md("*In kWh*"),
+    )
+    .cols_label(
+        Day="Electricity Day",
+        Night="Electricity Night",
+        Gas="Gas",
+    )
+    .cols_align("center")
+    .fmt_integer(sep_mark='.')
+)
+```
+
 ### Energy consumption pattern - actuals
 The following energy consumption was inputted by the user. 
 ```{python}
@@ -68,7 +100,6 @@ Extracting the data from the last 12 months, we can calculate the yearly consump
 ```{python}
 # Calculate yearly consumption based on actuals
 yearly_consumption = energy_consumption.get_actual_consumption_last_12_months()
-
 
 df_consumption = pd.DataFrame(data = {
   'Day': [yearly_consumption['Day']],
@@ -92,3 +123,32 @@ df_consumption = pd.DataFrame(data = {
 ```
 
 ### Result
+```{python}
+# Calculation method
+method = energy_consumption.get_consumption_data_calculation()
+print('Calculation method:')
+print(method)
+
+consumption = energy_consumption.get_total_consumption_data()
+
+df_consumption = pd.DataFrame(data = {
+  'Day': [yearly_consumption['Day']],
+  'Night': [yearly_consumption['Night']],
+  'Gas': [yearly_consumption['Gas']]})
+
+(
+    GT(df_consumption)
+    .tab_header(
+        title=md("Yearky consumption based on " + method),
+        subtitle=md("*In kWh*"),
+    )
+    .cols_label(
+        Day="Electricity Day",
+        Night="Electricity Night",
+        Gas="Gas",
+    )
+    .cols_align("center")
+    .fmt_integer(sep_mark='.')
+)
+
+```
